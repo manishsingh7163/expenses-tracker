@@ -618,6 +618,27 @@ body {
     animation: spin 0.7s linear infinite;
 }
 
+/* Footer */
+.app-footer {
+    text-align: center;
+    padding: 16px;
+    font-size: 12px;
+    color: var(--on-surface-dim);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.app-footer a {
+    color: var(--on-surface-dim);
+    text-decoration: underline;
+}
+
+.app-footer span {
+    opacity: 0.5;
+}
+
 /* Animations */
 @keyframes fadeIn {
     from { opacity: 0; }
