@@ -18,6 +18,9 @@ let accessToken = null;
 let spreadsheetId = localStorage.getItem('spreadsheet_id');
 let currentType = 'EXPENSE';
 let userInfo = null;
+let allTransactions = [];
+let currentPeriod = 'month';
+let currentDate = new Date();
 
 const CATEGORIES = {
     EXPENSE: ['Food', 'Transport', 'Shopping', 'Bills', 'Entertainment', 'Health', 'Education', 'Other'],
@@ -259,7 +262,7 @@ async function fetchTransactions() {
         );
 
         const rows = data.values || [];
-        const transactions = rows.map(row => ({
+        allTransactions = rows.map(row => ({
             date: row[0] || '',
             type: row[1] || 'EXPENSE',
             category: row[2] || '',
@@ -267,11 +270,10 @@ async function fetchTransactions() {
             description: row[4] || ''
         })).reverse();
 
-        renderTransactions(transactions);
-        renderSummary(transactions);
+        applyFilter();
     } catch (_) {
-        renderTransactions([]);
-        renderSummary([]);
+        allTransactions = [];
+        applyFilter();
     }
 }
 
@@ -293,6 +295,102 @@ async function addTransaction(type, category, amount, description) {
 }
 
 // ============================================================
+// PERIOD FILTER
+// ============================================================
+const MONTH_NAMES = ['January','February','March','April','May','June',
+    'July','August','September','October','November','December'];
+const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun',
+    'Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function setPeriod(period) {
+    currentPeriod = period;
+    currentDate = new Date();
+    document.querySelectorAll('.period-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.period === period);
+    });
+    const nav = document.querySelector('.period-nav');
+    if (period === 'all') {
+        nav.classList.add('hidden-nav');
+    } else {
+        nav.classList.remove('hidden-nav');
+    }
+    applyFilter();
+}
+
+function navigatePeriod(direction) {
+    if (currentPeriod === 'day') {
+        currentDate.setDate(currentDate.getDate() + direction);
+    } else if (currentPeriod === 'month') {
+        currentDate.setMonth(currentDate.getMonth() + direction);
+    } else if (currentPeriod === 'year') {
+        currentDate.setFullYear(currentDate.getFullYear() + direction);
+    }
+    applyFilter();
+}
+
+function getPeriodLabel() {
+    if (currentPeriod === 'all') return 'All Time';
+    if (currentPeriod === 'day') {
+        const today = new Date();
+        if (sameDay(currentDate, today)) return 'Today';
+        const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+        if (sameDay(currentDate, yesterday)) return 'Yesterday';
+        return `${currentDate.getDate()} ${MONTH_SHORT[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+    }
+    if (currentPeriod === 'month') {
+        return `${MONTH_NAMES[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+    }
+    if (currentPeriod === 'year') {
+        return `${currentDate.getFullYear()}`;
+    }
+    return '';
+}
+
+function sameDay(a, b) {
+    return a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
+}
+
+function parseTxDate(dateStr) {
+    if (!dateStr) return null;
+    // Handle "DD/MM/YYYY, HH:MM" (en-IN locale format)
+    const parts = dateStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (parts) {
+        return new Date(parseInt(parts[3]), parseInt(parts[2]) - 1, parseInt(parts[1]));
+    }
+    // Handle "YYYY-MM-DD" or other standard formats
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? null : d;
+}
+
+function filterTransactions(transactions) {
+    if (currentPeriod === 'all') return transactions;
+
+    return transactions.filter(tx => {
+        const d = parseTxDate(tx.date);
+        if (!d) return false;
+
+        if (currentPeriod === 'day') {
+            return sameDay(d, currentDate);
+        }
+        if (currentPeriod === 'month') {
+            return d.getMonth() === currentDate.getMonth() && d.getFullYear() === currentDate.getFullYear();
+        }
+        if (currentPeriod === 'year') {
+            return d.getFullYear() === currentDate.getFullYear();
+        }
+        return true;
+    });
+}
+
+function applyFilter() {
+    const filtered = filterTransactions(allTransactions);
+    $('period-label').textContent = getPeriodLabel();
+    $('tx-count').textContent = filtered.length ? `${filtered.length} entries` : '';
+    renderSummary(filtered);
+    renderTransactions(filtered);
+}
+
+// ============================================================
 // RENDER
 // ============================================================
 function renderSummary(transactions) {
@@ -308,7 +406,10 @@ function renderSummary(transactions) {
 
 function renderTransactions(transactions) {
     if (!transactions.length) {
-        txList.innerHTML = '<div class="empty-state">No transactions yet. Tap + to add one.</div>';
+        const msg = allTransactions.length === 0
+            ? 'No transactions yet. Tap + to add one.'
+            : `No transactions for ${getPeriodLabel().toLowerCase()}.`;
+        txList.innerHTML = `<div class="empty-state">${msg}</div>`;
         return;
     }
 

@@ -102,6 +102,25 @@
             <button class="banner-link" onclick="openSheetLink()">Open Sheet</button>
         </div>
 
+        <!-- Period Filter -->
+        <div class="period-bar">
+            <div class="period-tabs">
+                <button class="period-tab" data-period="day" onclick="setPeriod('day')">Day</button>
+                <button class="period-tab active" data-period="month" onclick="setPeriod('month')">Month</button>
+                <button class="period-tab" data-period="year" onclick="setPeriod('year')">Year</button>
+                <button class="period-tab" data-period="all" onclick="setPeriod('all')">All</button>
+            </div>
+            <div class="period-nav">
+                <button class="nav-btn" onclick="navigatePeriod(-1)">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                </button>
+                <span id="period-label" class="period-label">March 2026</span>
+                <button class="nav-btn" onclick="navigatePeriod(1)">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+                </button>
+            </div>
+        </div>
+
         <!-- Summary Cards -->
         <div class="summary">
             <div class="card card-income">
@@ -120,7 +139,8 @@
 
         <!-- Transactions List -->
         <div class="section-header">
-            <h3>Recent Transactions</h3>
+            <h3 id="section-title">Transactions</h3>
+            <span id="tx-count" class="tx-count"></span>
         </div>
         <div id="transactions-list" class="transactions">
             <div class="empty-state">No transactions yet. Tap + to add one.</div>

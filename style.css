@@ -309,6 +309,74 @@ body {
     flex-shrink: 0;
 }
 
+/* Period Filter */
+.period-bar {
+    padding: 12px 16px 4px;
+}
+
+.period-tabs {
+    display: flex;
+    gap: 0;
+    background: var(--surface-card);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+    box-shadow: var(--shadow);
+    margin-bottom: 10px;
+}
+
+.period-tab {
+    flex: 1;
+    padding: 8px 4px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: var(--on-surface-dim);
+    transition: all 0.2s;
+}
+
+.period-tab.active {
+    background: var(--primary);
+    color: var(--on-primary);
+}
+
+.period-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.period-nav.hidden-nav {
+    visibility: hidden;
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    color: var(--on-surface);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.nav-btn:hover {
+    background: rgba(0,0,0,0.05);
+}
+
+.period-label {
+    font-size: 15px;
+    font-weight: 600;
+    min-width: 140px;
+    text-align: center;
+}
+
 /* Summary Cards */
 .summary {
     display: grid;
@@ -362,6 +430,14 @@ body {
 .section-header h3 {
     font-size: 16px;
     font-weight: 600;
+}
+
+.tx-count {
+    font-size: 12px;
+    color: var(--on-surface-dim);
+    background: var(--surface);
+    padding: 2px 8px;
+    border-radius: 10px;
 }
 
 /* Transactions List */
