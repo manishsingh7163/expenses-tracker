@@ -1,7 +1,7 @@
 // ============================================================
 // CONFIG — Replace with your own Google Cloud OAuth Client ID
 // ============================================================
-const CLIENT_ID = 'YOUR_CLIENT_ID.apps.googleusercontent.com';
+const CLIENT_ID = '1054094870440-s489ff70g89l7e9tbb5numvlu6diduin.apps.googleusercontent.com';
 const SCOPES = [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive.file',
