@@ -61,15 +61,20 @@ function waitForGsi() {
 }
 
 function initAuth() {
+    const savedEmail = getSavedEmail();
+
     tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: SCOPES,
         callback: handleTokenResponse,
+        hint: savedEmail || '',
     });
 
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').catch(() => {});
     }
+
+    tryRestoreSession();
 }
 
 // ============================================================
@@ -81,11 +86,54 @@ function handleSignIn() {
 
 function handleTokenResponse(response) {
     if (response.error) {
-        showToast('Sign-in failed. Please try again.', 'error');
+        if (!isSilentAuth) {
+            showToast('Sign-in failed. Please try again.', 'error');
+        }
+        isSilentAuth = false;
         return;
     }
+    isSilentAuth = false;
     accessToken = response.access_token;
+    saveToken(accessToken, response.expires_in);
     fetchUserInfo();
+}
+
+let isSilentAuth = false;
+
+function tryRestoreSession() {
+    const savedToken = localStorage.getItem('access_token');
+    const savedExpiry = parseInt(localStorage.getItem('token_expiry') || '0');
+    const savedUser = localStorage.getItem('user_info');
+
+    if (savedUser && savedToken && Date.now() < savedExpiry) {
+        accessToken = savedToken;
+        userInfo = JSON.parse(savedUser);
+        spreadsheetId = localStorage.getItem('spreadsheet_id');
+        showMainScreen();
+        loadOrCreateSpreadsheet();
+        return;
+    }
+
+    if (savedUser) {
+        userInfo = JSON.parse(savedUser);
+        isSilentAuth = true;
+        tokenClient.requestAccessToken({ prompt: '' });
+        return;
+    }
+}
+
+function saveToken(token, expiresIn) {
+    localStorage.setItem('access_token', token);
+    localStorage.setItem('token_expiry', String(Date.now() + (expiresIn || 3600) * 1000));
+}
+
+function getSavedEmail() {
+    try {
+        const saved = localStorage.getItem('user_info');
+        return saved ? JSON.parse(saved).email || '' : '';
+    } catch (_) {
+        return '';
+    }
 }
 
 async function fetchUserInfo() {
@@ -112,6 +160,8 @@ function handleSignOut() {
     spreadsheetId = null;
     localStorage.removeItem('user_info');
     localStorage.removeItem('spreadsheet_id');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('token_expiry');
     $('connected-banner').classList.add('hidden');
     showLoginScreen();
     closeMenu();
@@ -159,9 +209,10 @@ async function apiFetch(url, options = {}) {
     if (res.status === 401) {
         return new Promise((resolve, reject) => {
             tokenClient.callback = (resp) => {
+                tokenClient.callback = handleTokenResponse;
                 if (resp.error) { reject(new Error('Auth refresh failed')); return; }
                 accessToken = resp.access_token;
-                tokenClient.callback = handleTokenResponse;
+                saveToken(accessToken, resp.expires_in);
                 apiFetch(url, options).then(resolve).catch(reject);
             };
             tokenClient.requestAccessToken({ prompt: '' });
